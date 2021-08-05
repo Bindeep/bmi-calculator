@@ -182,9 +182,17 @@ new Vue({
       this.height_ft = this.cmToImperial(cm).feet;
       this.height_inch = this.cmToImperial(cm).inches;
     },
-    calculate() {
-      this.bmi = this.round(this.calculateBMI(this.weight, this.height), 1)
-      this.weightGroup = this.getWeightGroup(this.bmi)
+    async calculate() {
+      const data = {
+        weight: this.weight,
+        height: this.height
+      }
+      const response = await this.postData(
+        url='/api/v1/bmi/calculate/',
+        data
+      )
+      this.bmi = response.bmi.toFixed(2)
+      this.weightGroup = response.weight_group
     },
     round(value, precision) {
       // easy round function
@@ -210,34 +218,22 @@ new Vue({
         inches: inches
       }
     },
-    calculateBMI(kg, cm) {
-      let m = cm / 100;
-      if (kg > 0 && m > 0) {
-        return kg / Math.pow(m, 2);
-      } else {
-        return 0;
-      }
-    },
-    getWeightGroup(bmi) {
-      if (bmi === 0) {
-        return "";
-      } else if (bmi < 15) {
-        return "Very Severely Underweight";
-      } else if (bmi >= 15 && bmi < 16) {
-        return "Severely Underweight";
-      } else if (bmi >= 16 && bmi < 18.5) {
-        return "Underweight";
-      } else if (bmi >= 18.5 && bmi < 25) {
-        return "Healthy Weight";
-      } else if (bmi >= 25 && bmi < 30) {
-        return "Overweight";
-      } else if (bmi >= 30 && bmi < 35) {
-        return "Moderately Obese";
-      } else if (bmi >= 35 && bmi < 40) {
-        return "Severely Obese";
-      } else if (bmi > 40) {
-        return "Very Severely Obese";
-      }
+    async postData(url = '', data = {}) {
+      // Default options are marked with *
+      const response = await fetch(url, {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        mode: 'cors', // no-cors, *cors, same-origin
+        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: 'same-origin', // include, *same-origin, omit
+        headers: {
+          'Content-Type': 'application/json'
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        body: JSON.stringify(data) // body data type must match "Content-Type" header
+      });
+      return response.json(); // parses JSON response into native JavaScript objects
     }
   }
 });
